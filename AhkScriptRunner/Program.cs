@@ -7,7 +7,7 @@
 // File Name: Program.cs
 // 
 // Current Data:
-// 2021-07-23 9:27 AM
+// 2021-07-23 9:35 AM
 // 
 // Creation Date:
 // 2021-07-23 8:55 AM
@@ -23,6 +23,10 @@ using AllOverIt.GenericHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
+using TwitchLib.Api;
+using TwitchLib.Api.Interfaces;
+using TwitchLib.PubSub;
+using TwitchLib.PubSub.Interfaces;
 
 #endregion
 
@@ -46,6 +50,8 @@ namespace AhkScriptRunner
           services.AddSingleton<IConsoleApp, ConsoleService>();
           services.AddHostedService<ConsoleClient>();
           services.AddSingleton(p => appConfig);
+          services.AddScoped<ITwitchAPI, TwitchAPI>();
+          services.AddScoped<ITwitchPubSub, TwitchPubSub>();
         })
         .RunConsoleAsync(options => options.SuppressStatusMessages = true);
 
@@ -67,7 +73,9 @@ namespace AhkScriptRunner
             new AppConfig
             {
               ApplicationClientId = "dev.twitch.tv/console/apps client id here",
-              ChannelName = "your channel name"
+              ChannelName = "your channel name",
+              ApplicationClientSecret = "dev.twitch.tv/console/apps client secret here",
+              AccessToken = "get an access token from here https://twitchtokengenerator.com"
             },
             Formatting.Indented);
 
