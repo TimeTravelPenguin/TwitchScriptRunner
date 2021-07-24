@@ -7,7 +7,7 @@
 // File Name: Program.cs
 // 
 // Current Data:
-// 2021-07-24 5:04 PM
+// 2021-07-24 7:01 PM
 // 
 // Creation Date:
 // 2021-07-23 8:55 AM
@@ -59,7 +59,7 @@ namespace TwitchScriptRunner
 
       Console.ForegroundColor = ConsoleColor.DarkYellow;
       Console.WriteLine("This application was made by TimeTravelPenguin.");
-      Console.WriteLine("Checkout the application repository: https://github.com/TimeTravelPenguin/AhkScriptRunner");
+      Console.WriteLine("Checkout the application repository: https://github.com/TimeTravelPenguin/TwitchScriptRunner");
       Console.WriteLine(
         "Feel free to leave a tip or donation -- it helps me buy textbooks for university! Of course, you don't have to!");
       Console.WriteLine("Donation page: https://ko-fi.com/timetravelpenguin");
@@ -68,7 +68,7 @@ namespace TwitchScriptRunner
 
       await host.RunConsoleAsync(options => options.SuppressStatusMessages = true);
 
-      Console.WriteLine("Application has finished executing. Press any key to exit...");
+      Console.WriteLine(Environment.NewLine + "Application has finished executing. Press any key to exit...");
       Console.ReadKey(true);
       Environment.Exit(0);
     }
