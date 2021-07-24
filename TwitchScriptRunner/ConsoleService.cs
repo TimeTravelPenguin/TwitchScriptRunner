@@ -7,7 +7,7 @@
 // File Name: ConsoleService.cs
 // 
 // Current Data:
-// 2021-07-24 3:17 PM
+// 2021-07-24 6:58 PM
 // 
 // Creation Date:
 // 2021-07-23 9:18 AM
@@ -37,10 +37,12 @@ namespace TwitchScriptRunner
 
     public override Task StartAsync(CancellationToken cancellationToken = new())
     {
-      Console.Title = "AHK Script Runner for Twitch";
+      Console.Title = "Script Runner for Twitch";
       _logger.LogInformation("Application service is running");
 
-      Console.WriteLine(Environment.NewLine + "Press ESC to terminate the application" + Environment.NewLine);
+      Console.ForegroundColor = ConsoleColor.Red;
+      Console.WriteLine(Environment.NewLine + "\tPress ESC to terminate the application" + Environment.NewLine);
+      Console.ForegroundColor = ConsoleColor.White;
 
       while (true)
       {
