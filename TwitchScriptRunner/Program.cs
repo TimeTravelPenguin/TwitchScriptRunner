@@ -7,7 +7,7 @@
 // File Name: Program.cs
 // 
 // Current Data:
-// 2021-07-24 4:18 PM
+// 2021-07-24 5:04 PM
 // 
 // Creation Date:
 // 2021-07-23 8:55 AM
@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using AllOverIt.GenericHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -56,7 +55,6 @@ namespace TwitchScriptRunner
           services.AddSingleton(p => appConfig);
           services.AddScoped<ITwitchAPI, TwitchAPI>();
           services.AddScoped<ITwitchPubSub, TwitchPubSub>();
-          services.AddScoped<CancellationTokenSource>();
         });
 
       Console.ForegroundColor = ConsoleColor.DarkYellow;
