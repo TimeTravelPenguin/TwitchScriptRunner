@@ -7,7 +7,7 @@
 // File Name: ConsoleClient.cs
 // 
 // Current Data:
-// 2021-07-24 4:38 PM
+// 2021-07-24 6:41 PM
 // 
 // Creation Date:
 // 2021-07-23 9:23 AM
@@ -38,6 +38,7 @@ namespace TwitchScriptRunner
   internal class ConsoleClient : ConsoleWorker
   {
     private readonly AppConfig _appConfig;
+    private readonly IHostApplicationLifetime _applicationLifetime;
     private readonly ILogger<ConsoleClient> _logger;
     private readonly ITwitchAPI _twitchApi;
     private readonly ITwitchPubSub _twitchClient;
@@ -47,6 +48,7 @@ namespace TwitchScriptRunner
       ITwitchAPI twitchApi, ITwitchPubSub twitchClient, ILogger<ConsoleClient> logger)
       : base(applicationLifetime)
     {
+      _applicationLifetime = applicationLifetime;
       _appConfig = appConfig;
       _twitchApi = twitchApi;
       _twitchClient = twitchClient;
@@ -54,11 +56,9 @@ namespace TwitchScriptRunner
 
       _twitchApi.Settings.ClientId = _appConfig.ApplicationClientId;
       _twitchApi.Settings.Secret = _appConfig.ApplicationClientSecret;
-
-      ConfigureListenEvents();
     }
 
-    private async void ConfigureListenEvents()
+    private async Task<bool> ConfigureListenEvents()
     {
       try
       {
@@ -70,9 +70,7 @@ namespace TwitchScriptRunner
       {
         _logger.LogCritical(e.ToString());
 
-        // TODO FIX
-        Environment.Exit(-1);
-        return;
+        return false;
       }
 
       if (_userData is null)
@@ -80,9 +78,7 @@ namespace TwitchScriptRunner
         _logger.LogCritical(
           $"{nameof(_appConfig.ChannelName)} with value '{_appConfig.ChannelName}' cannot be found on Twitch");
 
-        // TODO FIX
-        Environment.Exit(-1);
-        return;
+        return false;
       }
 
       _twitchClient.OnPubSubServiceConnected += TwitchClientOnServiceConnected;
@@ -102,6 +98,8 @@ namespace TwitchScriptRunner
         _twitchClient.ListenToRewards(_userData.Id);
         _twitchClient.OnRewardRedeemed += TwitchClientOnRewardRedeemed;
       }
+
+      return true;
     }
 
     private void TwitchClientOnServiceError(object? sender, OnPubSubServiceErrorArgs e)
@@ -175,13 +173,20 @@ namespace TwitchScriptRunner
       _twitchClient.SendTopics(_appConfig.OAuthAccessToken);
     }
 
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-      _logger.LogInformation("Connecting PubSub client");
-      _twitchClient.Connect();
-      _logger.LogInformation("Connected PubSub client");
+      var isValid = await ConfigureListenEvents();
 
-      return Task.CompletedTask;
+      if (isValid)
+      {
+        _logger.LogInformation("Connecting PubSub client");
+        _twitchClient.Connect();
+        _logger.LogInformation("Connected PubSub client");
+      }
+      else
+      {
+        _applicationLifetime.StopApplication();
+      }
     }
 
     protected override void OnStopping()
