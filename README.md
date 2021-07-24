@@ -21,7 +21,7 @@ Currently supported script execution types:
 - [.NET Core runtime](https://dotnet.microsoft.com/download/dotnet/5.0/runtime) (will prompt on execution if not installed)
 - Python (to run python scripts)
 - AutoHotKey (to run akh scripts)
-- Must have an account on dev.twitch.tv
+- Must have an account on [dev.twitch.tv](https://dev.twitch.tv)
 
 ## Installation
 
