@@ -2,12 +2,12 @@
 
 // Name: Phillip Smith
 // 
-// Solution: AhkScriptRunner
-// Project: AhkScriptRunner
+// Solution: TwitchScriptRunner
+// Project: TwitchScriptRunner
 // File Name: ConsoleService.cs
 // 
 // Current Data:
-// 2021-07-23 9:25 AM
+// 2021-07-24 3:17 PM
 // 
 // Creation Date:
 // 2021-07-23 9:18 AM
@@ -24,7 +24,7 @@ using Microsoft.Extensions.Logging;
 
 #endregion
 
-namespace AhkScriptRunner
+namespace TwitchScriptRunner
 {
   internal class ConsoleService : ConsoleAppBase
   {
