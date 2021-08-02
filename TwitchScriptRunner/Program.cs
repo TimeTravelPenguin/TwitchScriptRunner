@@ -1,18 +1,15 @@
 ﻿#region Title Header
 
 // Name: Phillip Smith
-// 
+//
 // Solution: TwitchScriptRunner
-// Project: TwitchScriptRunner
-// File Name: Program.cs
-// 
-// Current Data:
-// 2021-07-24 7:01 PM
-// 
-// Creation Date:
-// 2021-07-23 8:55 AM
+// Project: TwitchScriptRunner File Name: Program.cs
+//
+// Current Data: 2021-08-02 10:26 AM
+//
+// Creation Date: 2021-07-23 8:55 AM
 
-#endregion
+#endregion Title Header
 
 #region usings
 
@@ -31,7 +28,7 @@ using TwitchLib.PubSub;
 using TwitchLib.PubSub.Interfaces;
 using TwitchScriptRunner.Helpers;
 
-#endregion
+#endregion usings
 
 namespace TwitchScriptRunner
 {
@@ -87,7 +84,8 @@ namespace TwitchScriptRunner
           ChannelName = "your channel name",
           ApplicationClientSecret = "dev.twitch.tv/console/apps client secret here",
           OAuthAccessToken = "get an access token from here https://twitchtokengenerator.com",
-          ScriptDirectory = new ScriptDir {ScriptDirParentPath = Path.Combine(AppContext.BaseDirectory, "Scripts")}
+          OAuthRefreshToken = "get a refresh token from here https://twitchtokengenerator.com",
+          ScriptDirectory = new ScriptDir { ScriptDirParentPath = Path.Combine(AppContext.BaseDirectory, "Scripts") }
         };
 
         var serialized = JsonConvert.SerializeObject(newConfig, Formatting.Indented);
@@ -127,6 +125,19 @@ namespace TwitchScriptRunner
       return appConfig;
     }
 
+    private static void ListMissingDirs(IEnumerable<string> allDirs)
+    {
+      Console.WriteLine("The directories");
+      foreach (var scriptSubDir in allDirs)
+      {
+        Console.WriteLine($"\t{scriptSubDir}");
+        Directory.CreateDirectory(scriptSubDir);
+      }
+
+      Console.WriteLine("did not exist, but have been created.");
+      Console.WriteLine("Place .ahk and .py files inside the respective subdirectories and relaunch the program.");
+    }
+
     private static bool ValidateScriptDirs(string scriptDir)
     {
       var scriptSubDirs = ApiListeningEventHelper.GetAllEventScriptPaths(scriptDir);
@@ -161,19 +172,6 @@ namespace TwitchScriptRunner
       }
 
       return true;
-    }
-
-    private static void ListMissingDirs(IEnumerable<string> allDirs)
-    {
-      Console.WriteLine("The directories");
-      foreach (var scriptSubDir in allDirs)
-      {
-        Console.WriteLine($"\t{scriptSubDir}");
-        Directory.CreateDirectory(scriptSubDir);
-      }
-
-      Console.WriteLine("did not exist, but have been created.");
-      Console.WriteLine("Place .ahk and .py files inside the respective subdirectories and relaunch the program.");
     }
   }
 }
