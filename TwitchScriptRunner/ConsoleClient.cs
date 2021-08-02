@@ -1,18 +1,15 @@
 ﻿#region Title Header
 
 // Name: Phillip Smith
-// 
+//
 // Solution: TwitchScriptRunner
-// Project: TwitchScriptRunner
-// File Name: ConsoleClient.cs
-// 
-// Current Data:
-// 2021-07-24 6:41 PM
-// 
-// Creation Date:
-// 2021-07-23 9:23 AM
+// Project: TwitchScriptRunner File Name: ConsoleClient.cs
+//
+// Current Data: 2021-08-02 10:26 AM
+//
+// Creation Date: 2021-07-23 9:23 AM
 
-#endregion
+#endregion Title Header
 
 #region usings
 
@@ -26,12 +23,13 @@ using AllOverIt.GenericHost;
 using AllOverIt.Process;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using TwitchLib.Api.Helix.Models.Users.GetUsers;
 using TwitchLib.Api.Interfaces;
 using TwitchLib.PubSub.Events;
 using TwitchLib.PubSub.Interfaces;
 
-#endregion
+#endregion usings
 
 namespace TwitchScriptRunner
 {
@@ -56,13 +54,43 @@ namespace TwitchScriptRunner
 
       _twitchApi.Settings.ClientId = _appConfig.ApplicationClientId;
       _twitchApi.Settings.Secret = _appConfig.ApplicationClientSecret;
+
+      if (_appConfig.NextTokenRefresh.Date <= DateTime.Today.Date)
+      {
+        RefreshTokens();
+      }
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+      var isValid = await ConfigureListenEvents();
+
+      if (isValid)
+      {
+        _logger.LogInformation("Connecting PubSub client");
+        _twitchClient.Connect();
+        _logger.LogInformation("Connected PubSub client");
+      }
+      else
+      {
+        _applicationLifetime.StopApplication();
+      }
+    }
+
+    protected override void OnStopping()
+    {
+      base.OnStopping();
+
+      _logger.LogInformation("Disconnecting PubSub client");
+      _twitchClient.Disconnect();
+      _logger.LogInformation("Disconnecting PubSub client");
     }
 
     private async Task<bool> ConfigureListenEvents()
     {
       try
       {
-        _userData = (await _twitchApi.Helix.Users.GetUsersAsync(logins: new List<string> {_appConfig.ChannelName}))
+        _userData = (await _twitchApi.Helix.Users.GetUsersAsync(logins: new List<string> { _appConfig.ChannelName }))
           .Users
           .FirstOrDefault();
       }
@@ -100,23 +128,6 @@ namespace TwitchScriptRunner
       }
 
       return true;
-    }
-
-    private void TwitchClientOnServiceError(object? sender, OnPubSubServiceErrorArgs e)
-    {
-      _logger.LogError(e.Exception.Message);
-    }
-
-    private async void TwitchClientOnBitsReceived(object? sender, OnBitsReceivedArgs e)
-    {
-      _logger.LogInformation($"Bits received: {e.BitsUsed} from {e.Username}");
-      await ExecuteScript(nameof(ApiListeningEvents.BitDonations), e.BitsUsed.ToString());
-    }
-
-    private async void TwitchClientOnRewardRedeemed(object? sender, OnRewardRedeemedArgs e)
-    {
-      _logger.LogInformation($"Reward redeemed: {e.RewardTitle} by {e.DisplayName}");
-      await ExecuteScript(nameof(ApiListeningEvents.ChannelPointRedemption), e.RewardTitle.Replace(" ", ""));
     }
 
     private async Task ExecuteScript(string eventName, string eventValue)
@@ -160,6 +171,26 @@ namespace TwitchScriptRunner
       }
     }
 
+    private void RefreshTokens()
+    {
+      _logger.LogInformation("Refreshing token...");
+
+      var response = _twitchApi.ThirdParty.AuthorizationFlow.RefreshToken(_appConfig.OAuthRefreshToken);
+      _appConfig.OAuthAccessToken = response.Token;
+      _appConfig.OAuthRefreshToken = response.Refresh;
+      _appConfig.NextTokenRefresh = DateTime.Today.AddDays(60);
+
+      _logger.LogInformation($"Token refresh completed. Next refresh: {_appConfig.NextTokenRefresh.Date}");
+
+      UpdateAppConfig();
+    }
+
+    private async void TwitchClientOnBitsReceived(object? sender, OnBitsReceivedArgs e)
+    {
+      _logger.LogInformation($"Bits received: {e.BitsUsed} from {e.Username}");
+      await ExecuteScript(nameof(ApiListeningEvents.BitDonations), e.BitsUsed.ToString());
+    }
+
     private void TwitchClientOnListenResponse(object? sender, OnListenResponseArgs e)
     {
       if (!e.Successful)
@@ -168,34 +199,28 @@ namespace TwitchScriptRunner
       }
     }
 
+    private async void TwitchClientOnRewardRedeemed(object? sender, OnRewardRedeemedArgs e)
+    {
+      _logger.LogInformation($"Reward redeemed: {e.RewardTitle} by {e.DisplayName}");
+      await ExecuteScript(nameof(ApiListeningEvents.ChannelPointRedemption), e.RewardTitle.Replace(" ", ""));
+    }
+
     private void TwitchClientOnServiceConnected(object? sender, EventArgs e)
     {
       _twitchClient.SendTopics(_appConfig.OAuthAccessToken);
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    private void TwitchClientOnServiceError(object? sender, OnPubSubServiceErrorArgs e)
     {
-      var isValid = await ConfigureListenEvents();
-
-      if (isValid)
-      {
-        _logger.LogInformation("Connecting PubSub client");
-        _twitchClient.Connect();
-        _logger.LogInformation("Connected PubSub client");
-      }
-      else
-      {
-        _applicationLifetime.StopApplication();
-      }
+      _logger.LogError(e.Exception.Message);
     }
 
-    protected override void OnStopping()
+    private void UpdateAppConfig()
     {
-      base.OnStopping();
+      File.WriteAllText(Path.Combine(AppContext.BaseDirectory, "appconfig.json"),
+        JsonConvert.SerializeObject(_appConfig, Formatting.Indented));
 
-      _logger.LogInformation("Disconnecting PubSub client");
-      _twitchClient.Disconnect();
-      _logger.LogInformation("Disconnecting PubSub client");
+      _logger.LogInformation("Updated appconfig.json");
     }
   }
 }
